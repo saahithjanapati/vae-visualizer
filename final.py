@@ -3,29 +3,50 @@ import numpy as np
 import plotly.express as px
 
 
+# TODO: make a thing to select two oints on the scatter plot
+# TODO: make a gif maker class
+# TODO: make slider worrk one-way
+# TODO: integrate with model
 
 
+SLIDER_MIN = 0
+SLIDER_MAX = 9
+SLIDER_INITIAL_VALUE = 5
 
 app = Dash(__name__)
 app.layout = html.Div([
     html.H6("Hello"),
     dcc.Graph(id="scatter-plot"),
-    dcc.RangeSlider(
-        id='range-slider',
-        min=0, max=2.5, step=0.1,
-        marks={0: '0', 2.5: '2.5'},
-        value=[0.5, 2])
-])
+    dcc.Slider(
+        min=SLIDER_MIN,
+        max=SLIDER_MAX,
+        step=None,
+        marks={i: str(i) for i in range(SLIDER_MIN, SLIDER_MAX)},
+        value=SLIDER_INITIAL_VALUE, id="epoch-slider"),
+    html.H6(f"Epoch number: {SLIDER_INITIAL_VALUE}", id="epoch-label")])
 
 
+
+# this callback will eventually change the graph and the sliders, and the gifs
+# pretty much everything on our dashboard
 @app.callback(
-    Output("scatter-plot", "figure"),
-    Input("range-slider", "value"))
+    Output("epoch-label", "children"),
+    Input("epoch-slider", "value"))
+def update_epoch_number(epoch_number):
+    return f"Epoch number: {epoch_number}" 
 
-def update_bar_chart(slider_range):
-    fig = px.scatter(x=[0, 1, 2, 3, 4], y=[0, 1, 4, 9, 16])
-    return fig
-    
+
+
+# update graph according to epoch slider value
+# @app.callback(
+#     Output("scatter-plot", "figure"),
+#     Input("epoch-slider", "value"))
+# def update_bar_chart(slider_range):
+#     fig = px.scatter(x=[0, 1, 2, 3, 4], y=[0, 1, 4, 9, 16])
+#     return fig
+
+
+
 
 
 
