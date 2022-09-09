@@ -74,6 +74,10 @@ latent_space_inputs = [
     )
     for i in range(LATENT_SPACE_DIM)]
 
+latent_space_inputs.append(
+    html.Button("Copy last selected latent vector", id = "copy_latent_vector")
+)
+
 app.layout = html.Div([
     html.H1("VAE Visualizer", style={"text-align":"center"}),
 
@@ -91,7 +95,10 @@ app.layout = html.Div([
     html.H6( f"{RADIO_BUTTONS[0]}", id="point1"),
     html.Img(src='', id="image1", height=100, width=100),
     html.H6(f"{RADIO_BUTTONS[1]}", id="point2"),
-    html.Img(src="", id="image2", height=100, width=100)] + latent_space_inputs)
+    html.Img(src="", id="image2", height=100, width=100), html.Br(), 
+    html.Button("Interpolate", id = "interpolate"),    
+    html.Div(latent_space_inputs)]
+)
 
 
 
