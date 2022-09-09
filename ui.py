@@ -24,7 +24,7 @@ vae_api = VAE_API(os.path.join(os.getcwd(), "checkpoints/"), dataset, batch_size
 
 
 EPOCH_SLIDER_MIN = 1
-EPOCH_SLIDER_MAX = num_epochs+1
+EPOCH_SLIDER_MAX = num_epochs
 EPOCH_SLIDER_INITIAL_VALUE = num_epochs
 
 
@@ -67,20 +67,20 @@ app = Dash(__name__)
 
 app.layout = html.Div([
     dcc.Graph(id="scatter-plot", figure=GRAPH),
-    dcc.Slider(
-        min=EPOCH_SLIDER_MIN,
-        max=EPOCH_SLIDER_MAX,
-        step=None,
-        marks={i: str(i) for i in range(EPOCH_SLIDER_MIN, EPOCH_SLIDER_MAX)},
-        value=EPOCH_SLIDER_INITIAL_VALUE, id="epoch-slider"),
-    html.H6(f"Epoch number: {EPOCH_SLIDER_INITIAL_VALUE}", id="epoch-label"),
+    # dcc.Slider(
+    #     min=EPOCH_SLIDER_MIN,
+    #     max=EPOCH_SLIDER_MAX,
+    #     step=None,
+    #     marks={i: str(i) for i in range(EPOCH_SLIDER_MIN, EPOCH_SLIDER_MAX+1)},
+    #     value=EPOCH_SLIDER_INITIAL_VALUE, id="epoch-slider"),
+    # html.H6(f"Epoch number: {EPOCH_SLIDER_INITIAL_VALUE}", id="epoch-label"),
     dcc.RadioItems(RADIO_BUTTONS, INITIAL_RADIO_SELECTION, id="radio_button"),
     html.H6(f"Data Point Being Edited: {INITIAL_RADIO_SELECTION}", id="radio_info"),
     
     html.H6( f"{RADIO_BUTTONS[0]}", id="point1"),
-    html.Img(src='', id="image1"),
+    html.Img(src='', id="image1", height=100, width=100),
     html.H6(f"{RADIO_BUTTONS[1]}", id="point2"),
-    html.Img(src="", id="image2")])
+    html.Img(src="", id="image2", height=100, width=100)])
 # html.H6(f"{RADIO_BUTTONS[1]} Value: {DATA_POINT_2}", id="point2")] + latent_space_sliders)
 
 
@@ -104,6 +104,7 @@ app.layout = html.Div([
     Output("radio_info", "children"),
     Input("radio_button", "value"))
 def update_radio_selection(option):
+    print("callback1")
     global RADIO_SELECTION
     RADIO_SELECTION = option
     print(f"RADIO_SELECTION: {RADIO_SELECTION}")
@@ -117,23 +118,26 @@ def update_radio_selection(option):
 #     RADIO_SELECTION = option
 
 # select different epoch to visualize with the slider
-@app.callback(
-    Output("epoch-label", "children"),
-    Input("epoch-slider", "value"))
-def update_epoch_number(epoch_number):
-    return f"Epoch number: {epoch_number}" 
+# @app.callback(
+#     Output("epoch-label", "children"),
+#     Input("epoch-slider", "value"))
+# def update_epoch_number(epoch_number):
+#     print("callback2")
+#     return f"Epoch number: {epoch_number}" 
 
 
 
 # update graph with new epoch number
-@app.callback(
-    Output("scatter-plot", "figure"),
-    Input("epoch-slider", "value"))
-def update_graph(epoch_number):
-    global GRAPH
-    df = vae_api.generate_scatterplot_dataframe(epoch_number)
-    GRAPH = px.scatter(df, x="x", y="y", color="labels")
-    return GRAPH
+# @app.callback(
+#     Output("scatter-plot", "figure"),
+#     Input("epoch-slider", "value"))
+# def update_graph(epoch_number):
+#     print("callback3")
+#     # print(f"hello{epoch_number}")
+#     global GRAPH
+#     df = vae_api.generate_scatterplot_dataframe(epoch_number)
+#     GRAPH = px.scatter(df, x="x", y="y", color="labels")
+#     return GRAPH
 
 
 # choose point on scatterplot for latent-space interpolation
@@ -142,6 +146,7 @@ def update_graph(epoch_number):
     Output('image2', 'src'),
     Input('scatter-plot', 'clickData'))
 def display_click_data(clickData):
+    print("callback4")
     global IMAGE_1, IMAGE_2, RADIO_SELECTION, df
     # print(clickData)
     # print(RADIO_SELECTION)
