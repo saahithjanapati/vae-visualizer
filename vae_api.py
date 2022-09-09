@@ -7,6 +7,7 @@ from torchvision.utils import save_image
 from model_config import image_size, h_dim, z_dim
 from vae import VAE
 import pandas as pd
+import os
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -35,10 +36,14 @@ class VAE_API:
         that can be plotted on dashboard
         """
         z, x, labels = self.get_latent_vectors()
-        print(z[0])
-        print(x[0])
-        print(labels[0])
-        pass
+        z = [list([elem.item() for elem in i]) for i in z]
+
+        for i in range(len(x)):
+            image = x[i]
+            save_image(image, os.path.join(os.getcwd(), f"assets/{i}.png"))
+
+        df = pd.DataFrame({"id":[i for i in range(len(z))] , "z": z, "labels":labels})
+        print(df)
 
 
     def reduce_dimensions(self):
@@ -52,9 +57,12 @@ class VAE_API:
         """
         with torch.no_grad():
             x, labels = next(iter(self.dataloader))
-            x = x.to(device).view(-1, image_size)
-            mu, log_var = self.model.encode(x)
+            x_mod = x.to(device).view(-1, image_size)
+            mu, log_var = self.model.encode(x_mod)
             z = self.model.reparameterize(mu, log_var)
+
+
+            # save images to local directory
             return z, x, labels
     
 
