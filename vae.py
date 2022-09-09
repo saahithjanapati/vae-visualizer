@@ -1,12 +1,4 @@
-# https://github.com/yunjey/pytorch-tutorial/blob/master/tutorials/03-advanced/variational_autoencoder/main.py#L38-L65
-
-# plan
-#   - try running on FashionMNIST
-#   - get good results on FashionMNIST by potentially changing architecture
-#   - 
-#   - t-SNE or PCA visualizer to show latent encodings of training images sprerading apart during training
-#   - interpolate the latent space between two vector embeddings
-
+# Adapted from: https://github.com/yunjey/pytorch-tutorial/blob/master/tutorials/03-advanced/variational_autoencoder/main.py#L38-L65
 
 import os
 import torch
@@ -21,17 +13,22 @@ from torchvision.utils import save_image
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Create a directory if not exists
-sample_dir = 'samples'
+sample_dir = os.path.join(os.getcwd(), 'samples/')
 if not os.path.exists(sample_dir):
     os.makedirs(sample_dir)
+
+checkpoint_dir = os.path.join(os.getcwd(), "checkpoints/")
+if not os.path.exists(checkpoint_dir):
+    os.makedirs(checkpoint_dir)
 
 # Hyper-parameters
 image_size = 784
 h_dim = 400
-z_dim = 20
+z_dim = 10
 num_epochs = 15
 batch_size = 128
 learning_rate = 1e-3
+
 
 # MNIST dataset
 dataset = torchvision.datasets.MNIST(root='../../data',
@@ -44,15 +41,10 @@ data_loader = torch.utils.data.DataLoader(dataset=dataset,
                                           batch_size=batch_size, 
                                           shuffle=True)
 
-
 # VAE model
 class VAE(nn.Module):
     def __init__(self, image_size=784, h_dim=400, z_dim=20):
         super(VAE, self).__init__()
-
-
-        
-
         self.fc1 = nn.Linear(image_size, h_dim)
         self.fc2 = nn.Linear(h_dim, z_dim)
         self.fc3 = nn.Linear(h_dim, z_dim)
@@ -78,8 +70,9 @@ class VAE(nn.Module):
         x_reconst = self.decode(z)
         return x_reconst, mu, log_var
 
-model = VAE().to(device)
+model = VAE(image_size=image_size, h_dim=h_dim, z_dim=z_dim).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+
 
 # Start training
 for epoch in range(num_epochs):
@@ -103,6 +96,9 @@ for epoch in range(num_epochs):
             print ("Epoch[{}/{}], Step [{}/{}], Reconst Loss: {:.4f}, KL Div: {:.4f}" 
                    .format(epoch+1, num_epochs, i+1, len(data_loader), reconst_loss.item(), kl_div.item()))
     
+    path = os.path.join(checkpoint_dir, f"model_{epoch+1}.pt")
+    torch.save({'epoch': epoch, 'model_state_dict': model.state_dict()}, path)
+
     with torch.no_grad():
         # Save the sampled images
         z = torch.randn(batch_size, z_dim).to(device)
