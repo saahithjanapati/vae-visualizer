@@ -47,7 +47,7 @@ RADIO_SELECTION = RADIO_BUTTONS[0]
 
 ####
 ## Variables for latent space visualization
-LATENT_SPACE_DIM = 2
+LATENT_SPACE_DIM = z_dim
 LATENT_SPACE_MIN = 0
 LATENT_SPACE_MAX = 10
 LATENT_SPACE_SLIDER_STEP = 0.1
@@ -64,6 +64,15 @@ app = Dash(__name__)
 #         marks=LATENT_SPACE_MARKS, 
 #         value=LATENT_SPACE_SLIDER_INITIAL_VALUE, id=f"latent-space-dim-{i}") for i in range(LATENT_SPACE_DIM)]
 
+
+
+latent_space_inputs = [
+    dcc.Input(
+        id=f"latent_input_{i}",
+        type = "number",
+        placeholder = f"x{i}"
+    )
+    for i in range(LATENT_SPACE_DIM)]
 
 app.layout = html.Div([
     html.H1("VAE Visualizer", style={"text-align":"center"}),
@@ -82,7 +91,11 @@ app.layout = html.Div([
     html.H6( f"{RADIO_BUTTONS[0]}", id="point1"),
     html.Img(src='', id="image1", height=100, width=100),
     html.H6(f"{RADIO_BUTTONS[1]}", id="point2"),
-    html.Img(src="", id="image2", height=100, width=100)])
+    html.Img(src="", id="image2", height=100, width=100)] + latent_space_inputs)
+
+
+
+
 # html.H6(f"{RADIO_BUTTONS[1]} Value: {DATA_POINT_2}", id="point2")] + latent_space_sliders)
 
 
