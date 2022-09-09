@@ -25,7 +25,7 @@ vae_api = VAE_API(os.path.join(os.getcwd(), "checkpoints/"), dataset, batch_size
 
 EPOCH_SLIDER_MIN = 1
 EPOCH_SLIDER_MAX = num_epochs
-EPOCH_SLIDER_INITIAL_VALUE = num_epochs
+EPOCH_SLIDER_INITIAL_VALUE = 5
 
 
 IMAGE_1 = None
@@ -35,7 +35,7 @@ IMAGE_2 = None
 # GRAPH_DATA_X = [0, 1, 2, 3, 4]
 # GRAPH_DATA_Y = [x**EPOCH_SLIDER_INITIAL_VALUE for x in GRAPH_DATA_X]
 df = vae_api.generate_scatterplot_dataframe(num_epochs)
-GRAPH = px.scatter(df, x="x", y="y", color="labels")
+GRAPH = px.scatter(df, x="x", y="y", color="labels", title="tSNE embeddings of latent space vectors")
 
 
 
@@ -66,6 +66,8 @@ app = Dash(__name__)
 
 
 app.layout = html.Div([
+    html.H1("VAE Visualizer", style={"text-align":"center"}),
+
     dcc.Graph(id="scatter-plot", figure=GRAPH),
     # dcc.Slider(
     #     min=EPOCH_SLIDER_MIN,
@@ -75,7 +77,7 @@ app.layout = html.Div([
     #     value=EPOCH_SLIDER_INITIAL_VALUE, id="epoch-slider"),
     # html.H6(f"Epoch number: {EPOCH_SLIDER_INITIAL_VALUE}", id="epoch-label"),
     dcc.RadioItems(RADIO_BUTTONS, INITIAL_RADIO_SELECTION, id="radio_button"),
-    html.H6(f"Data Point Being Edited: {INITIAL_RADIO_SELECTION}", id="radio_info"),
+    html.H6(f"Image Being Edited: {INITIAL_RADIO_SELECTION}", id="radio_info"),
     
     html.H6( f"{RADIO_BUTTONS[0]}", id="point1"),
     html.Img(src='', id="image1", height=100, width=100),
@@ -108,7 +110,7 @@ def update_radio_selection(option):
     global RADIO_SELECTION
     RADIO_SELECTION = option
     print(f"RADIO_SELECTION: {RADIO_SELECTION}")
-    return f"Data Point Being Edited: {RADIO_SELECTION}"
+    return f"Image Being Edited: {RADIO_SELECTION}"
 
 
 # @app.callback(
