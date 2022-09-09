@@ -1,3 +1,4 @@
+from asyncore import read
 from tkinter import LAST
 from tkinter.tix import IMAGE
 from dash import Dash, dcc, html, Input, Output
@@ -24,9 +25,9 @@ dataset = torchvision.datasets.MNIST(root='../../data',
 vae_api = VAE_API(os.path.join(os.getcwd(), "checkpoints/"), dataset, batch_size=512)
 
 
-EPOCH_SLIDER_MIN = 1
-EPOCH_SLIDER_MAX = num_epochs
-EPOCH_SLIDER_INITIAL_VALUE = 5
+# EPOCH_SLIDER_MIN = 1
+# EPOCH_SLIDER_MAX = num_epochs
+# EPOCH_SLIDER_INITIAL_VALUE = 5
 
 
 IMAGE_1 = None
@@ -56,7 +57,8 @@ LATENT_SPACE_DIM = z_dim
 # LATENT_SPACE_MARKS = {i: str(i) for i in range(EPOCH_SLIDER_MIN, EPOCH_SLIDER_MAX+1)}
 
 
-LAST_SELECTED_VECTOR = None
+LAST_SELECTED_VECTOR = [0,0,0,0,0,0,0,0,0,0]
+LAST_RECONSTRUCTEd_VECTOR = None
 latent_vector_1 = None
 latent_vector_2 = None
 
@@ -76,12 +78,13 @@ latent_space_inputs = [
         id=f"latent_input_{i}",
         type = "number",
         placeholder = f"x{i}",
-        value="0"
+        value="0",
+        readOnly=True
     )
     for i in range(LATENT_SPACE_DIM)]
 
 latent_space_inputs.append(
-    html.Button("Copy last selected latent vector", id = "copy_latent_vector")
+    html.Button("Reconstruct last selected latent vector", id = "copy_latent_vector")
 )
 
 app.layout = html.Div([
@@ -105,7 +108,7 @@ app.layout = html.Div([
 
 
     html.Button("Interpolate", id = "interpolate"), 
-    dcc.Input(id=f"num-steps", type = "number", placeholder = "number of frames in GIF", value="100"),
+    # dcc.Input(id=f"num-steps", type = "number", placeholder = "number of frames in GIF", value="100"),
     html.Img(src="", id="interpolation-gif", height=100, width=100),
     # <img src="programming.gif" alt="Computer man" style="width:48px;height:48px;">   
     html.Div(latent_space_inputs),
@@ -174,16 +177,16 @@ def update_radio_selection(option):
 
 @app.callback(
     Output("interpolation-gif", "src"),
-    Input("num-steps", "value"),
+    # Input("num-steps", "value"),
     Input("interpolate", "n_clicks"))
-def get_interpolation_gif(num_steps, n_clicks):
+def get_interpolation_gif(n_clicks):
     global latent_vector_1, latent_vector_2
     if latent_vector_1 == None or latent_vector_2 == None:
         return ""
     else:
-        print(latent_vector_1)
-        print(latent_vector_2)
-        return vae_api.generate_iterpolation_gif(latent_vector1=latent_vector_1, latent_vector_2=latent_vector_2, num_steps=int(num_steps))
+        # print(latent_vector_1)
+        # print(latent_vector_2)
+        return vae_api.generate_iterpolation_gif(latent_vector1=latent_vector_1, latent_vector_2=latent_vector_2, num_steps=100)
 
 
 
@@ -198,32 +201,34 @@ def get_interpolation_gif(num_steps, n_clicks):
     Output("latent_input_7", "value"),
     Output("latent_input_8", "value"),
     Output("latent_input_9", "value"),
+    Output('generated_img', 'src'),
     Input('copy_latent_vector', 'n_clicks'),
 )
 def update_latent_vector(n_clicks):
-    if LAST_SELECTED_VECTOR == None:
-        return [0]*LATENT_SPACE_DIM
-    return LAST_SELECTED_VECTOR
-
-
-@app.callback(
-    Output('generated_img', 'src'),
-    Input("latent_input_0", "value"),
-    Input("latent_input_1", "value"),
-    Input("latent_input_2", "value"),
-    Input("latent_input_3", "value"),
-    Input("latent_input_4", "value"),
-    Input("latent_input_5", "value"),
-    Input("latent_input_6", "value"),
-    Input("latent_input_7", "value"),
-    Input("latent_input_8", "value"),
-    Input("latent_input_9", "value")
-)
-def generate_new_image(x0, x1, x2, x3, x4, x5, x6, x7, x8, x9):
     global LAST_SELECTED_VECTOR
-    LAST_SELECTED_VECTOR = [x0, x1, x2, x3, x4, x5, x6, x7, x8, x9]
-    img_path = vae_api.generate_image(LAST_SELECTED_VECTOR)
-    return img_path
+    if LAST_SELECTED_VECTOR == None:
+        LAST_SELECTED_VECTOR = [0]*LATENT_SPACE_DIM
+    return LAST_SELECTED_VECTOR + [vae_api.generate_image(LAST_SELECTED_VECTOR)]
+
+
+# @app.callback(
+#     Output('generated_img', 'src'),
+#     Input("latent_input_0", "value"),
+#     Input("latent_input_1", "value"),
+#     Input("latent_input_2", "value"),
+#     Input("latent_input_3", "value"),
+#     Input("latent_input_4", "value"),
+#     Input("latent_input_5", "value"),
+#     Input("latent_input_6", "value"),
+#     Input("latent_input_7", "value"),
+#     Input("latent_input_8", "value"),
+#     Input("latent_input_9", "value")
+# )
+# def generate_new_image(x0, x1, x2, x3, x4, x5, x6, x7, x8, x9):
+#     global LAST_SELECTED_VECTOR
+#     LAST_SELECTED_VECTOR = [x0, x1, x2, x3, x4, x5, x6, x7, x8, x9]
+#     img_path = vae_api.generate_image(LAST_SELECTED_VECTOR)
+#     return img_path
 
 
 # choose point on scatterplot for latent-space interpolation
