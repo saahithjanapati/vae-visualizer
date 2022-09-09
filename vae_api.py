@@ -1,11 +1,15 @@
 import torch
 from torchvision.utils import save_image
-
+from torchvision.transforms.functional import to_tensor
 import pandas as pd
-from sklearn.decomposition import PCA
+# from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
+from scipy.interpolate import interp1d
+
 import numpy as np
 import os
+import shutil
+import imageio
 
 from model_config import image_size, h_dim, z_dim
 from vae import VAE
@@ -75,6 +79,40 @@ class VAE_API:
             return z, x, labels
     
 
-    def generate_iterpolation_gif(self):
+    def stitch_images(self, directory, num_steps=100):
+        """stitches images in specified directory to create a GIF
+        https://stackoverflow.com/questions/753190/programmatically-generate-video-or-animated-gif-in-python
+        """
+        filenames = [os.path.join(directory, f"{i}.png") for i in range(0, num_steps)]
+        images = []
+        for filename in filenames:
+            images.append(imageio.imread(filename))
+        assets_dir = os.path.join(os.getcwd(), 'assets/interpolation.gif')
+        imageio.mimsave(assets_dir, images, duration=0.05)
+        return 'assets/interpolation.gif' 
+
+
+    def generate_iterpolation_gif(self, latent_vector1, latent_vector_2, num_steps=100):
         """create interpolation_gif between two latent-space vectors"""
-        pass
+        lv1 = np.array(latent_vector1)
+        lv2 = np.array(latent_vector_2)
+        linfit = interp1d([1,num_steps], np.vstack([lv1, lv2]), axis=0)
+
+        # check if folder exists
+        gif_dir = os.path.join(os.getcwd(), 'assets/gif_imgs/')
+        if os.path.exists(gif_dir):
+            shutil.rmtree(gif_dir)
+        os.makedirs(gif_dir)
+        # delete elements in folder if it exists
+
+        latent_vectors =  linfit([i for i in range(1,num_steps+1)])
+        latent_vectors = torch.Tensor(latent_vectors)
+
+        with torch.no_grad():
+            generated = self.model.decode(latent_vectors).view(-1, 1, 28, 28)
+            for i in range(generated.shape[0]):
+                new_gen = generated[i].view(-1, 1, 28, 28)
+                save_image(new_gen, os.path.join(os.getcwd(), f"assets/gif_imgs/{i}.png"), normalize=True)
+        
+        return self.stitch_images(os.path.join(os.getcwd(), f"assets/gif_imgs/"))
+        

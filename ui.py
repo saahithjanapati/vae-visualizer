@@ -57,6 +57,8 @@ LATENT_SPACE_DIM = z_dim
 
 
 LAST_SELECTED_VECTOR = None
+latent_vector_1 = None
+latent_vector_2 = None
 
 
 
@@ -99,8 +101,13 @@ app.layout = html.Div([
     html.H6( f"{RADIO_BUTTONS[0]}", id="point1"),
     html.Img(src='', id="image1", height=100, width=100),
     html.H6(f"{RADIO_BUTTONS[1]}", id="point2"),
-    html.Img(src="", id="image2", height=100, width=100), html.Br(), 
-    html.Button("Interpolate", id = "interpolate"),    
+    html.Img(src="", id="image2", height=100, width=100), html.Br(),
+
+
+    html.Button("Interpolate", id = "interpolate"), 
+    dcc.Input(id=f"num-steps", type = "number", placeholder = "number of frames in GIF", value="100"),
+    html.Img(src="", id="interpolation-gif", height=100, width=100),
+    # <img src="programming.gif" alt="Computer man" style="width:48px;height:48px;">   
     html.Div(latent_space_inputs),
     html.Img(src='', id="generated_img", height=100, width=100)])
 
@@ -165,6 +172,20 @@ def update_radio_selection(option):
 #     GRAPH = px.scatter(df, x="x", y="y", color="labels")
 #     return GRAPH
 
+@app.callback(
+    Output("interpolation-gif", "src"),
+    Input("num-steps", "value"),
+    Input("interpolate", "n_clicks"))
+def get_interpolation_gif(num_steps, n_clicks):
+    global latent_vector_1, latent_vector_2
+    if latent_vector_1 == None or latent_vector_2 == None:
+        return ""
+    else:
+        print(latent_vector_1)
+        print(latent_vector_2)
+        return vae_api.generate_iterpolation_gif(latent_vector1=latent_vector_1, latent_vector_2=latent_vector_2, num_steps=int(num_steps))
+
+
 
 @app.callback(
     Output("latent_input_0", "value"),
@@ -212,7 +233,7 @@ def generate_new_image(x0, x1, x2, x3, x4, x5, x6, x7, x8, x9):
     Input('scatter-plot', 'clickData'))
 def display_click_data(clickData):
     print("callback4")
-    global IMAGE_1, IMAGE_2, RADIO_SELECTION, df, LAST_SELECTED_VECTOR
+    global IMAGE_1, IMAGE_2, RADIO_SELECTION, df, LAST_SELECTED_VECTOR, latent_vector_1, latent_vector_2
     # print(clickData)
     # print(RADIO_SELECTION)
     if clickData == None:
@@ -221,21 +242,23 @@ def display_click_data(clickData):
     # print(clickData["points"])
     if RADIO_SELECTION == RADIO_BUTTONS[0]:
         # print("editing data point 1")
-        IMAGE_1 = os.path.join(os.getcwd(), f'assets/{clickData["points"][0]["pointIndex"]}.png')
+        # IMAGE_1 = os.path.join(os.getcwd(), f'assets/{clickData["points"][0]["pointIndex"]}.png')
         index = clickData["points"][0]["pointIndex"]
         IMAGE_1 = f'./assets/{clickData["points"][0]["pointIndex"]}.png'
         LAST_SELECTED_VECTOR = df.loc[index]["z"]
+        latent_vector_1 = LAST_SELECTED_VECTOR
 
 
 
     else:
         IMAGE_2 = os.path.join(os.getcwd(), f'assets/{clickData["points"][0]["pointIndex"]}.png')
         index = clickData["points"][0]["pointIndex"]
-
         IMAGE_2 = f'./assets/{clickData["points"][0]["pointIndex"]}.png'
         LAST_SELECTED_VECTOR = df.loc[index]["z"]
+        latent_vector_2 = LAST_SELECTED_VECTOR
+
     
-    print(LAST_SELECTED_VECTOR)
+    # print(LAST_SELECTED_VECTOR)
 
 
     return IMAGE_1, IMAGE_2
