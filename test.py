@@ -8,6 +8,7 @@ from vae import VAE
 from vae_api import VAE_API
 
 import plotly.express as px
+import os
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -17,11 +18,12 @@ dataset = torchvision.datasets.MNIST(root='../../data',
                                      download=True)
 
 
-model_path = "/Users/saahith/Desktop/variational-autoencoder/checkpoints/model_15.pt"
-vae_api = VAE_API(model_path, dataset, batch_size=512)
+# model_path = "/Users/saahith/Desktop/variational-autoencoder/checkpoints/model_15.pt"
+            #    '/Users/saahith/Desktop/variational-autoencodercheckpoints/model_15.pt'
+vae_api = VAE_API(os.getcwd()+"/checkpoints/", dataset, batch_size=512)
 # latent_vectors, x, labels = vae_api.get_latent_vectors()
 
-df = vae_api.generate_scatterplot_dataframe()
+df = vae_api.generate_scatterplot_dataframe(epoch_number=15)
 
 fig = px.scatter(df, x="x", y="y", color="labels")
 fig.show()
