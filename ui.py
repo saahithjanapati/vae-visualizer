@@ -1,3 +1,4 @@
+from tkinter import LAST
 from tkinter.tix import IMAGE
 from dash import Dash, dcc, html, Input, Output
 import numpy as np
@@ -48,12 +49,14 @@ RADIO_SELECTION = RADIO_BUTTONS[0]
 ####
 ## Variables for latent space visualization
 LATENT_SPACE_DIM = z_dim
-LATENT_SPACE_MIN = 0
-LATENT_SPACE_MAX = 10
-LATENT_SPACE_SLIDER_STEP = 0.1
-LATENT_SPACE_SLIDER_INITIAL_VALUE = (LATENT_SPACE_MIN + LATENT_SPACE_MAX)/2
-LATENT_SPACE_MARKS = {i: str(i) for i in range(EPOCH_SLIDER_MIN, EPOCH_SLIDER_MAX+1)}
+# LATENT_SPACE_MIN = 0
+# LATENT_SPACE_MAX = 10
+# LATENT_SPACE_SLIDER_STEP = 0.1
+# LATENT_SPACE_SLIDER_INITIAL_VALUE = (LATENT_SPACE_MIN + LATENT_SPACE_MAX)/2
+# LATENT_SPACE_MARKS = {i: str(i) for i in range(EPOCH_SLIDER_MIN, EPOCH_SLIDER_MAX+1)}
 
+
+LAST_SELECTED_VECTOR = None
 
 
 
@@ -70,7 +73,8 @@ latent_space_inputs = [
     dcc.Input(
         id=f"latent_input_{i}",
         type = "number",
-        placeholder = f"x{i}"
+        placeholder = f"x{i}",
+        value="0"
     )
     for i in range(LATENT_SPACE_DIM)]
 
@@ -97,8 +101,8 @@ app.layout = html.Div([
     html.H6(f"{RADIO_BUTTONS[1]}", id="point2"),
     html.Img(src="", id="image2", height=100, width=100), html.Br(), 
     html.Button("Interpolate", id = "interpolate"),    
-    html.Div(latent_space_inputs)]
-)
+    html.Div(latent_space_inputs),
+    html.Img(src='', id="generated_img", height=100, width=100)])
 
 
 
@@ -162,6 +166,45 @@ def update_radio_selection(option):
 #     return GRAPH
 
 
+@app.callback(
+    Output("latent_input_0", "value"),
+    Output("latent_input_1", "value"),
+    Output("latent_input_2", "value"),
+    Output("latent_input_3", "value"),
+    Output("latent_input_4", "value"),
+    Output("latent_input_5", "value"),
+    Output("latent_input_6", "value"),
+    Output("latent_input_7", "value"),
+    Output("latent_input_8", "value"),
+    Output("latent_input_9", "value"),
+    Input('copy_latent_vector', 'n_clicks'),
+)
+def update_latent_vector(n_clicks):
+    if LAST_SELECTED_VECTOR == None:
+        return [0]*LATENT_SPACE_DIM
+    return LAST_SELECTED_VECTOR
+
+
+@app.callback(
+    Output('generated_img', 'src'),
+    Input("latent_input_0", "value"),
+    Input("latent_input_1", "value"),
+    Input("latent_input_2", "value"),
+    Input("latent_input_3", "value"),
+    Input("latent_input_4", "value"),
+    Input("latent_input_5", "value"),
+    Input("latent_input_6", "value"),
+    Input("latent_input_7", "value"),
+    Input("latent_input_8", "value"),
+    Input("latent_input_9", "value")
+)
+def generate_new_image(x0, x1, x2, x3, x4, x5, x6, x7, x8, x9):
+    global LAST_SELECTED_VECTOR
+    LAST_SELECTED_VECTOR = [x0, x1, x2, x3, x4, x5, x6, x7, x8, x9]
+    img_path = vae_api.generate_image(LAST_SELECTED_VECTOR)
+    return img_path
+
+
 # choose point on scatterplot for latent-space interpolation
 @app.callback(
     Output('image1', 'src'),
@@ -169,7 +212,7 @@ def update_radio_selection(option):
     Input('scatter-plot', 'clickData'))
 def display_click_data(clickData):
     print("callback4")
-    global IMAGE_1, IMAGE_2, RADIO_SELECTION, df
+    global IMAGE_1, IMAGE_2, RADIO_SELECTION, df, LAST_SELECTED_VECTOR
     # print(clickData)
     # print(RADIO_SELECTION)
     if clickData == None:
@@ -179,11 +222,21 @@ def display_click_data(clickData):
     if RADIO_SELECTION == RADIO_BUTTONS[0]:
         # print("editing data point 1")
         IMAGE_1 = os.path.join(os.getcwd(), f'assets/{clickData["points"][0]["pointIndex"]}.png')
+        index = clickData["points"][0]["pointIndex"]
         IMAGE_1 = f'./assets/{clickData["points"][0]["pointIndex"]}.png'
+        LAST_SELECTED_VECTOR = df.loc[index]["z"]
+
+
 
     else:
         IMAGE_2 = os.path.join(os.getcwd(), f'assets/{clickData["points"][0]["pointIndex"]}.png')
+        index = clickData["points"][0]["pointIndex"]
+
         IMAGE_2 = f'./assets/{clickData["points"][0]["pointIndex"]}.png'
+        LAST_SELECTED_VECTOR = df.loc[index]["z"]
+    
+    print(LAST_SELECTED_VECTOR)
+
 
     return IMAGE_1, IMAGE_2
 

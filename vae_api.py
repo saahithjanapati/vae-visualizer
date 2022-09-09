@@ -52,7 +52,16 @@ class VAE_API:
 
         df = pd.DataFrame({"id":[i for i in range(len(z))],"x":x_coords, "y":y_coords, "z": z, "labels":labels})
         return df
-
+    
+    
+    def generate_image(self, latent_vector):
+        latent_vector = torch.Tensor(latent_vector)
+        with torch.no_grad():
+            generated = self.model.decode(latent_vector).view(-1, 1, 28, 28)
+            
+            save_image(generated, os.path.join(os.getcwd(), f"assets/generated.png"))
+        return "assets/generated.png"
+            
 
     def get_latent_vectors(self):
         """get latent vectors for <batch_size> images by running them into the model
