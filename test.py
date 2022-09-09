@@ -17,4 +17,10 @@ dataset = torchvision.datasets.MNIST(root='../../data',
 
 model_path = "/Users/saahith/Desktop/variational-autoencoder/checkpoints/model_15.pt"
 vae_api = VAE_API(model_path, dataset)
-x = vae_api.get_latent_vectors()
+# latent_vectors, x, labels = vae_api.get_latent_vectors()
+
+vae_api.generate_scatterplot_dataframe()
+
+
+# print(latent_vectors.shape)
+# print(labels.shape)

@@ -1,5 +1,5 @@
 # From https://github.com/yunjey/pytorch-tutorial/blob/master/tutorials/03-advanced/variational_autoencoder/main.py#L38-L65
-# with some slight modifications
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

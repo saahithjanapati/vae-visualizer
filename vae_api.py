@@ -6,6 +6,7 @@ from torchvision import transforms
 from torchvision.utils import save_image
 from model_config import image_size, h_dim, z_dim
 from vae import VAE
+import pandas as pd
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -25,6 +26,7 @@ class VAE_API:
         checkpoint = torch.load(model_path)
         model = VAE(image_size=image_size, h_dim=h_dim, z_dim=z_dim).to(device)
         model.load_state_dict(checkpoint['model_state_dict'])
+        model.eval()
         return model
 
 
@@ -32,6 +34,10 @@ class VAE_API:
         """creates dataframe containing low-dimensionality vectors and images
         that can be plotted on dashboard
         """
+        z, x, labels = self.get_latent_vectors()
+        print(z[0])
+        print(x[0])
+        print(labels[0])
         pass
 
 
@@ -41,17 +47,17 @@ class VAE_API:
 
 
     def get_latent_vectors(self):
-        """get latent vectors for <batch_size> images by running them into the model"""
-        x, labels = next(iter(self.dataloader))
-        print(x.shape)
-        print(labels.shape)
-        return 
+        """get latent vectors for <batch_size> images by running them into the model
+        returns latent vectors, images, and associated labels
+        """
+        with torch.no_grad():
+            x, labels = next(iter(self.dataloader))
+            x = x.to(device).view(-1, image_size)
+            mu, log_var = self.model.encode(x)
+            z = self.model.reparameterize(mu, log_var)
+            return z, x, labels
     
 
     def generate_iterpolation_gif(self):
         """create interpolation_gif between two latent-space vectors"""
         pass
-
-
-
-
