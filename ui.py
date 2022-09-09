@@ -1,30 +1,45 @@
+from tkinter.tix import IMAGE
 from dash import Dash, dcc, html, Input, Output
 import numpy as np
 import plotly.express as px
 
 
-# TODO: make a thing to select two points on the scatter plot
-# TODO: make a gif maker class
-# TODO: make slider worrk one-way
-# TODO: integrate with model
-# TODO: plain latent space explorer, plot on scatterplot with different color (just adjust vector values and see what happens ???)
+from vae_api import VAE_API
+
+import torch
+import torchvision
+from torchvision import transforms
+from vae_api import VAE_API
+from model_config import num_epochs, z_dim
+
+import os
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+dataset = torchvision.datasets.MNIST(root='../../data',
+                                     train=True,
+                                     transform=transforms.ToTensor(),
+                                     download=True)
+
+vae_api = VAE_API(os.path.join(os.getcwd(), "checkpoints/"), dataset, batch_size=512)
 
 
-EPOCH_SLIDER_MIN = 0
-EPOCH_SLIDER_MAX = 9
-EPOCH_SLIDER_INITIAL_VALUE = 3
+EPOCH_SLIDER_MIN = 1
+EPOCH_SLIDER_MAX = num_epochs+1
+EPOCH_SLIDER_INITIAL_VALUE = num_epochs
 
 
-DATA_POINT_1 = None
-DATA_POINT_2 = None
+IMAGE_1 = None
+IMAGE_2 = None
 
 
-GRAPH_DATA_X = [0, 1, 2, 3, 4]
-GRAPH_DATA_Y = [x**EPOCH_SLIDER_INITIAL_VALUE for x in GRAPH_DATA_X]
-GRAPH = px.scatter(x=GRAPH_DATA_X, y=GRAPH_DATA_Y)
+# GRAPH_DATA_X = [0, 1, 2, 3, 4]
+# GRAPH_DATA_Y = [x**EPOCH_SLIDER_INITIAL_VALUE for x in GRAPH_DATA_X]
+df = vae_api.generate_scatterplot_dataframe(num_epochs)
+GRAPH = px.scatter(df, x="x", y="y", color="labels")
 
 
-RADIO_BUTTONS = ["Data Point 1", "Data Point 2"]
+
+RADIO_BUTTONS = ["Image 1", "Image 2"]
 INITIAL_RADIO_SELECTION = RADIO_BUTTONS[0]
 RADIO_SELECTION = RADIO_BUTTONS[0]
 
@@ -40,12 +55,14 @@ LATENT_SPACE_SLIDER_INITIAL_VALUE = (LATENT_SPACE_MIN + LATENT_SPACE_MAX)/2
 LATENT_SPACE_MARKS = {i: str(i) for i in range(EPOCH_SLIDER_MIN, EPOCH_SLIDER_MAX+1)}
 
 
+
+
 app = Dash(__name__)
 
-latent_space_sliders = [
-        dcc.Slider(min=LATENT_SPACE_MIN,max=LATENT_SPACE_MAX, step=LATENT_SPACE_SLIDER_STEP, 
-        marks=LATENT_SPACE_MARKS, 
-        value=LATENT_SPACE_SLIDER_INITIAL_VALUE, id=f"latent-space-dim-{i}") for i in range(LATENT_SPACE_DIM)]
+# latent_space_sliders = [
+#         dcc.Slider(min=LATENT_SPACE_MIN,max=LATENT_SPACE_MAX, step=LATENT_SPACE_SLIDER_STEP, 
+#         marks=LATENT_SPACE_MARKS, 
+#         value=LATENT_SPACE_SLIDER_INITIAL_VALUE, id=f"latent-space-dim-{i}") for i in range(LATENT_SPACE_DIM)]
 
 
 app.layout = html.Div([
@@ -60,8 +77,11 @@ app.layout = html.Div([
     dcc.RadioItems(RADIO_BUTTONS, INITIAL_RADIO_SELECTION, id="radio_button"),
     html.H6(f"Data Point Being Edited: {INITIAL_RADIO_SELECTION}", id="radio_info"),
     
-    html.H6( f"{RADIO_BUTTONS[0]} Value: {DATA_POINT_1}", id="point1"),
-    html.H6(f"{RADIO_BUTTONS[1]} Value: {DATA_POINT_2}", id="point2")] + latent_space_sliders)
+    html.H6( f"{RADIO_BUTTONS[0]}", id="point1"),
+    html.Img(src='', id="image1"),
+    html.H6(f"{RADIO_BUTTONS[1]}", id="point2"),
+    html.Img(src="", id="image2")])
+# html.H6(f"{RADIO_BUTTONS[1]} Value: {DATA_POINT_2}", id="point2")] + latent_space_sliders)
 
 
 
@@ -90,6 +110,11 @@ def update_radio_selection(option):
     return f"Data Point Being Edited: {RADIO_SELECTION}"
 
 
+# @app.callback(
+#     Input("radio_button", "value"))
+# def update_radio_selection(option):
+#     global RADIO_SELECTION
+#     RADIO_SELECTION = option
 
 # select different epoch to visualize with the slider
 @app.callback(
@@ -105,31 +130,39 @@ def update_epoch_number(epoch_number):
     Output("scatter-plot", "figure"),
     Input("epoch-slider", "value"))
 def update_graph(epoch_number):
-    global GRAPH_DATA_X, GRAPH_DATA_Y, GRAPH
-    GRAPH_DATA_X = [0, 1, 2, 3, 4]
-    GRAPH_DATA_Y = [x**epoch_number for x in GRAPH_DATA_X]
-    GRAPH = px.scatter(x=GRAPH_DATA_X, y=GRAPH_DATA_Y)
+    global GRAPH
+    df = vae_api.generate_scatterplot_dataframe(epoch_number)
+    GRAPH = px.scatter(df, x="x", y="y", color="labels")
     return GRAPH
 
 
 # choose point on scatterplot for latent-space interpolation
 @app.callback(
-    Output('point1', 'children'),
-    Output('point2', 'children'),
+    Output('image1', 'src'),
+    Output('image2', 'src'),
     Input('scatter-plot', 'clickData'))
 def display_click_data(clickData):
-    global DATA_POINT_1, DATA_POINT_2, RADIO_SELECTION
-    print(clickData)
-    print(RADIO_SELECTION)
+    global IMAGE_1, IMAGE_2, RADIO_SELECTION, df
+    # print(clickData)
+    # print(RADIO_SELECTION)
     if clickData == None:
-        return str(DATA_POINT_1), str(DATA_POINT_2)
-    if RADIO_SELECTION == RADIO_BUTTONS[0]:
-        print("editing data point 1")
-        DATA_POINT_1 = (clickData["points"][0]["x"], clickData["points"][0]["y"])
-    else:
-        DATA_POINT_2 = (clickData["points"][0]["x"], clickData["points"][0]["y"])
-    return str(DATA_POINT_1), str(DATA_POINT_2)
+        return IMAGE_1, IMAGE_2
 
+    # print(clickData["points"])
+    if RADIO_SELECTION == RADIO_BUTTONS[0]:
+        # print("editing data point 1")
+        IMAGE_1 = os.path.join(os.getcwd(), f'assets/{clickData["points"][0]["pointIndex"]}.png')
+        IMAGE_1 = f'./assets/{clickData["points"][0]["pointIndex"]}.png'
+
+    else:
+        IMAGE_2 = os.path.join(os.getcwd(), f'assets/{clickData["points"][0]["pointIndex"]}.png')
+        IMAGE_2 = f'./assets/{clickData["points"][0]["pointIndex"]}.png'
+
+    return IMAGE_1, IMAGE_2
+
+
+
+# <img id="image1" src="/Users/saahith/Desktop/variational-autoencoder/assets/201.png">
 
 
 

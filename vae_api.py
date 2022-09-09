@@ -36,6 +36,7 @@ class VAE_API:
         that can be plotted on dashboard
         """
         # load model for specified epoch
+        print(epoch_number)
         self.load_model(os.path.join(self.checkpoint_dir, f"model_{epoch_number}.pt"))
         
         z, x, labels = self.get_latent_vectors()
