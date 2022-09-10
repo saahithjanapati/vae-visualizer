@@ -1,6 +1,7 @@
 from asyncore import read
 from tkinter import LAST
 from tkinter.tix import IMAGE
+import dash
 from dash import Dash, dcc, html, Input, Output
 import numpy as np
 import plotly.express as px
@@ -24,20 +25,15 @@ dataset = torchvision.datasets.MNIST(root='../../data',
 
 vae_api = VAE_API(os.path.join(os.getcwd(), "checkpoints/"), dataset, batch_size=512)
 
+import dash_bootstrap_components as dbc
 
-# EPOCH_SLIDER_MIN = 1
-# EPOCH_SLIDER_MAX = num_epochs
-# EPOCH_SLIDER_INITIAL_VALUE = 5
 
 
 IMAGE_1 = None
 IMAGE_2 = None
 
-
-# GRAPH_DATA_X = [0, 1, 2, 3, 4]
-# GRAPH_DATA_Y = [x**EPOCH_SLIDER_INITIAL_VALUE for x in GRAPH_DATA_X]
 df = vae_api.generate_scatterplot_dataframe(num_epochs)
-GRAPH = px.scatter(df, x="x", y="y", color="labels", title="tSNE embeddings of latent space vectors")
+GRAPH = px.scatter(df, x="x", y="y", color="labels", title="tSNE embeddings of latent space vectors", template="plotly_dark")
 
 
 
@@ -50,11 +46,6 @@ RADIO_SELECTION = RADIO_BUTTONS[0]
 ####
 ## Variables for latent space visualization
 LATENT_SPACE_DIM = z_dim
-# LATENT_SPACE_MIN = 0
-# LATENT_SPACE_MAX = 10
-# LATENT_SPACE_SLIDER_STEP = 0.1
-# LATENT_SPACE_SLIDER_INITIAL_VALUE = (LATENT_SPACE_MIN + LATENT_SPACE_MAX)/2
-# LATENT_SPACE_MARKS = {i: str(i) for i in range(EPOCH_SLIDER_MIN, EPOCH_SLIDER_MAX+1)}
 
 
 LAST_SELECTED_VECTOR = [0,0,0,0,0,0,0,0,0,0]
@@ -63,75 +54,68 @@ latent_vector_1 = None
 latent_vector_2 = None
 
 
+# app = Dash(__name__)
+app = dash.Dash(external_stylesheets=[dbc.themes.CYBORG])
 
-app = Dash(__name__)
+# create assets dir if it doesn't already exist
+assets_directory = os.path.join(os.getcwd(), "assets/")
+if not os.path.exists(assets_directory):
+    os.makedirs(assets_directory)
 
-# latent_space_sliders = [
-#         dcc.Slider(min=LATENT_SPACE_MIN,max=LATENT_SPACE_MAX, step=LATENT_SPACE_SLIDER_STEP, 
-#         marks=LATENT_SPACE_MARKS, 
-#         value=LATENT_SPACE_SLIDER_INITIAL_VALUE, id=f"latent-space-dim-{i}") for i in range(LATENT_SPACE_DIM)]
-
-
-
-latent_space_inputs = [
-    dcc.Input(
-        id=f"latent_input_{i}",
-        type = "number",
-        placeholder = f"x{i}",
-        value="0",
-        readOnly=True
-    )
-    for i in range(LATENT_SPACE_DIM)]
+latent_space_inputs = [html.H2("Reconstruction Vector")]
+for i in range(LATENT_SPACE_DIM):
+    latent_space_inputs.append(
+        dcc.Input(id=f"latent_input_{i}", type = "number", placeholder = f"x{i}", value="0", readOnly=True, style={"color": "#ffffff", "background-color": "#080000"}))#}))
+    latent_space_inputs.append(html.Br())
 
 latent_space_inputs.append(
     html.Button("Reconstruct last selected latent vector", id = "copy_latent_vector")
 )
+latent_space_inputs.append(html.Br())
 
 app.layout = html.Div([
+    
+    
+
     html.H1("VAE Visualizer", style={"text-align":"center"}),
-
     dcc.Graph(id="scatter-plot", figure=GRAPH),
-    # dcc.Slider(
-    #     min=EPOCH_SLIDER_MIN,
-    #     max=EPOCH_SLIDER_MAX,
-    #     step=None,
-    #     marks={i: str(i) for i in range(EPOCH_SLIDER_MIN, EPOCH_SLIDER_MAX+1)},
-    #     value=EPOCH_SLIDER_INITIAL_VALUE, id="epoch-slider"),
-    # html.H6(f"Epoch number: {EPOCH_SLIDER_INITIAL_VALUE}", id="epoch-label"),
-    dcc.RadioItems(RADIO_BUTTONS, INITIAL_RADIO_SELECTION, id="radio_button"),
-    html.H6(f"Image Being Edited: {INITIAL_RADIO_SELECTION}", id="radio_info"),
+
+
+    html.Div([
+
+    html.Div([
+
+
+    # latent-space interpolation div
+
+    html.Div([
+    dcc.RadioItems(RADIO_BUTTONS, INITIAL_RADIO_SELECTION, id="radio_button", inputStyle ={"margin-left":"50px"}),
+
+    html.H4(f"Image Being Edited: {INITIAL_RADIO_SELECTION}", id="radio_info"),
     
-    html.H6( f"{RADIO_BUTTONS[0]}", id="point1"),
-    html.Img(src='', id="image1", height=100, width=100),
-    html.H6(f"{RADIO_BUTTONS[1]}", id="point2"),
-    html.Img(src="", id="image2", height=100, width=100), html.Br(),
+    html.H4( f"{RADIO_BUTTONS[0]}", id="point1"),
+    html.Img(src='', id="image1", height=200, width=200),
+    html.H4(f"{RADIO_BUTTONS[1]}", id="point2"),
+    html.Img(src="", id="image2", height=200, width=200), html.Br(),
+    html.Button("Interpolate", id = "interpolate"),
+    ], style={'padding': 10, 'flex': 1}),
 
-
-    html.Button("Interpolate", id = "interpolate"), 
-    # dcc.Input(id=f"num-steps", type = "number", placeholder = "number of frames in GIF", value="100"),
-    html.Img(src="", id="interpolation-gif", height=100, width=100),
-    # <img src="programming.gif" alt="Computer man" style="width:48px;height:48px;">   
-    html.Div(latent_space_inputs),
-    html.Img(src='', id="generated_img", height=100, width=100)])
-
-
-
-
-# html.H6(f"{RADIO_BUTTONS[1]} Value: {DATA_POINT_2}", id="point2")] + latent_space_sliders)
-
-
-
-# moidfy scatterplot graph to display individual latent space vector
-# individual callback for each input :(
-
-# def update_latent_vector(dim=0):
+    # separate div for the actual gif
+    html.Div([
+        html.H2("Interpolation GIF"),
+        html.Img(src="", id="interpolation-gif", height=300, width=300, style={"vertical-align": "middle"})], style={'padding': 10, 'flex': 1})
+    ], style={'padding': 10, 'flex': 1, 'display': 'flex', 'flex-direction': 'row'}),
+    
+    
+    
+    # latent-space reconstruction div
+    html.Div([html.Div(latent_space_inputs, style={'padding': 10, 'flex': 1}), html.Div([html.H2("Reconstructed Image"), html.Img(src='', id="generated_img", height=300, width=300)], style={'padding': 10, 'flex': 1})], style={'padding': 10, 'flex': 1, 'display': 'flex', 'flex-direction': 'row'})
     
 
-# for latent_dim in range(LATENT_SPACE_DIM):
-#     @app.callback(
-#         Output()
-#     )
 
+    ], style={'display': 'flex', 'flex-direction': 'row'}) 
+
+])
 
 
 
@@ -146,34 +130,6 @@ def update_radio_selection(option):
     print(f"RADIO_SELECTION: {RADIO_SELECTION}")
     return f"Image Being Edited: {RADIO_SELECTION}"
 
-
-# @app.callback(
-#     Input("radio_button", "value"))
-# def update_radio_selection(option):
-#     global RADIO_SELECTION
-#     RADIO_SELECTION = option
-
-# select different epoch to visualize with the slider
-# @app.callback(
-#     Output("epoch-label", "children"),
-#     Input("epoch-slider", "value"))
-# def update_epoch_number(epoch_number):
-#     print("callback2")
-#     return f"Epoch number: {epoch_number}" 
-
-
-
-# update graph with new epoch number
-# @app.callback(
-#     Output("scatter-plot", "figure"),
-#     Input("epoch-slider", "value"))
-# def update_graph(epoch_number):
-#     print("callback3")
-#     # print(f"hello{epoch_number}")
-#     global GRAPH
-#     df = vae_api.generate_scatterplot_dataframe(epoch_number)
-#     GRAPH = px.scatter(df, x="x", y="y", color="labels")
-#     return GRAPH
 
 @app.callback(
     Output("interpolation-gif", "src"),
@@ -211,26 +167,6 @@ def update_latent_vector(n_clicks):
     return LAST_SELECTED_VECTOR + [vae_api.generate_image(LAST_SELECTED_VECTOR)]
 
 
-# @app.callback(
-#     Output('generated_img', 'src'),
-#     Input("latent_input_0", "value"),
-#     Input("latent_input_1", "value"),
-#     Input("latent_input_2", "value"),
-#     Input("latent_input_3", "value"),
-#     Input("latent_input_4", "value"),
-#     Input("latent_input_5", "value"),
-#     Input("latent_input_6", "value"),
-#     Input("latent_input_7", "value"),
-#     Input("latent_input_8", "value"),
-#     Input("latent_input_9", "value")
-# )
-# def generate_new_image(x0, x1, x2, x3, x4, x5, x6, x7, x8, x9):
-#     global LAST_SELECTED_VECTOR
-#     LAST_SELECTED_VECTOR = [x0, x1, x2, x3, x4, x5, x6, x7, x8, x9]
-#     img_path = vae_api.generate_image(LAST_SELECTED_VECTOR)
-#     return img_path
-
-
 # choose point on scatterplot for latent-space interpolation
 @app.callback(
     Output('image1', 'src'),
@@ -254,7 +190,6 @@ def display_click_data(clickData):
         latent_vector_1 = LAST_SELECTED_VECTOR
 
 
-
     else:
         IMAGE_2 = os.path.join(os.getcwd(), f'assets/{clickData["points"][0]["pointIndex"]}.png')
         index = clickData["points"][0]["pointIndex"]
@@ -262,36 +197,8 @@ def display_click_data(clickData):
         LAST_SELECTED_VECTOR = df.loc[index]["z"]
         latent_vector_2 = LAST_SELECTED_VECTOR
 
-    
-    # print(LAST_SELECTED_VECTOR)
-
 
     return IMAGE_1, IMAGE_2
 
-
-
-# <img id="image1" src="/Users/saahith/Desktop/variational-autoencoder/assets/201.png">
-
-
-
-
-# update graph according to epoch slider value
-# @app.callback(
-#     Output("scatter-plot", "figure"),
-#     Input("epoch-slider", "value"))
-# def update_bar_chart(slider_range):
-#     fig = px.scatter(x=[0, 1, 2, 3, 4], y=[0, 1, 4, 9, 16])
-#     return fig
-
-
-
-
-
-
 if __name__ == "__main__":
     app.run_server(debug=True)
-    
-
-
-
-
