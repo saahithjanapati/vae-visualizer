@@ -1,13 +1,10 @@
-# variational-auto-encoder
+# vae-visualizer   <img src="https://github.com/saahithjanapati/vae-visualizer/blob/main/images/42.gif" width="50" height="50"/>
+
+
+![Screenshot](https://github.com/saahithjanapati/vae-visualizer/blob/main/images/screenshot.png)
 
 
 
-#TODO:
-- [x] understand sample code
-- [x] run on MNIST
-- [x] run on FashionMNIST
-- [ ] Experiment with different architectures
-- [ ] select final model architecture and stick with it
-- [ ] interactive scatter plot with t-SNE algorithm to visualize latent embeddings of training set elements (Plotly ?)
-- [ ] select two points on graph (or input your own) and create interpolation gif between the two vectors ???
-- [ ] visualization of latent space during training using t-sne or pca?? just add to dashboard at end
+## Acknowledgements:
+The code in `vae.py` and `train.py` is from [Yunjey's PyTorch tutorial repository](https://github.com/yunjey/pytorch-tutorial/blob/master/tutorials/03-advanced/variational_autoencoder/main.py). All other code is my own, unless otherwise noted.
+
