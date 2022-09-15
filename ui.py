@@ -62,7 +62,7 @@ assets_directory = os.path.join(os.getcwd(), "assets/")
 if not os.path.exists(assets_directory):
     os.makedirs(assets_directory)
 
-latent_space_inputs = [html.H2("Reconstruction Vector")]
+latent_space_inputs = [html.H2("Sampled Latent Vector")]
 for i in range(LATENT_SPACE_DIM):
     latent_space_inputs.append(
         dcc.Input(id=f"latent_input_{i}", type = "number", placeholder = f"x{i}", value="0", readOnly=True, style={"color": "#ffffff", "background-color": "#080000"}))#}))
