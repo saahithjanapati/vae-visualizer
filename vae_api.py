@@ -2,7 +2,6 @@ import torch
 from torchvision.utils import save_image
 from torchvision.transforms.functional import to_tensor
 import pandas as pd
-# from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 from scipy.interpolate import interp1d
 

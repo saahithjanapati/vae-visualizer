@@ -1,9 +1,5 @@
-from asyncore import read
-from tkinter import LAST
-from tkinter.tix import IMAGE
 import dash
-from dash import Dash, dcc, html, Input, Output
-import numpy as np
+from dash import dcc, html, Input, Output
 import plotly.express as px
 
 
