@@ -58,7 +58,7 @@ Schematic of Autoencoder
 
 
 
-Variational autoencoders are a spin on this model that their training data with probability distributions instead of plain vectors. The decoder then samples a vector from this probability distribution, and tries to regenerate the original data with this vector. It turns out that this helps the network learn better compressed representations.
+Variational autoencoders are a spin on this model that represent their training data with probability distributions instead of plain vectors. The decoder then samples a vector from this probability distribution, and tries to regenerate the original data with this vector. It turns out that this helps the network learn better compressed representations.
 
 ![Screenshot](https://github.com/saahithjanapati/vae-visualizer/blob/main/images/variationalautoencoder.png)
 
